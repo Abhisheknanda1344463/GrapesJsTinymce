@@ -19,6 +19,14 @@ class TinyForGrapesJs {
     editor.RichTextEditor.getAll().map(item => item.name).forEach(
       item => editor.RichTextEditor.remove(item)
     );
+    editor.on('frame:load:before', ({el}) => {
+      const doc = el.contentDocument;
+      if (!doc.doctype || doc.doctype.nodeName.toLowerCase() !== "html") {
+        doc.open();
+        doc.write("<!DOCTYPE html>");
+        doc.close();
+      }
+    });
     // Append tinymce editor
     editor.setCustomRte(
       {
@@ -26,8 +34,6 @@ class TinyForGrapesJs {
         disable: this.disable.bind(this)
       }
     );
-    // Add toolbar update handler
-    // editor.on('rteToolbarPosUpdate', this.handleRteToolbarPosUpdate.bind(this));
   }
 
   get editorOptions() {
@@ -117,7 +123,7 @@ class TinyForGrapesJs {
             'script',
             body,
             {
-                innerHTML: `function ${injectEditorInstant.name}(t,e,n=!1){let a=JSON.parse(decodeURI(e));function o(t,e,n){let a=document.createElement(t);return function t(e,n){if(n)for(let a in n)"object"==typeof n[a]?t(e[a],n[a]):e[a]=n[a]}(a,n),e&&e.appendChild(a),a}window.grapesjsTinyDocsData.toolbarContainer=o("div",document.body,{style:{position:"absolute",top:"0px",bottom:"0px",height:"min-content"}}),window.grapesjsTinyDocsData.toolbarContainer.addEventListener("mousedown",t=>{t.stopPropagation(),t.stopImmediatePropagation()}),window.grapesjsTinyDocsData.editedEl=document.body.querySelector(t),window.grapesjsTinyDocsData.forceBr=n,n&&window.grapesjsTinyDocsData.editedEl.addEventListener("keydown",window.grapesjsTinyDocsData.editorClickHandler),tinymce.init({selector:t,inline:!0,menubar:!1,newline_behavior:"default",plugins:a.plugins,toolbar:a.toolbar,fixed_toolbar_container_target:o("div",window.grapesjsTinyDocsData.toolbarContainer,{}),init_instance_callback:function(t){window.grapesjsTinyDocsData.editorInstance=t}}).then(t=>{window.grapesjsTinyDocsData.tinymceInstant=t[0],t[0].focus()})}`
+              innerHTML: `function ${injectEditorInstant.name}(t,e,n=!1){let a=JSON.parse(decodeURI(e));function o(t,e,n){let a=document.createElement(t);return function t(e,n){if(n)for(let a in n)"object"==typeof n[a]?t(e[a],n[a]):e[a]=n[a]}(a,n),e&&e.appendChild(a),a}window.grapesjsTinyDocsData.toolbarContainer=o("div",document.body,{style:{position:"absolute",top:"0px",bottom:"0px",height:"min-content"}}),window.grapesjsTinyDocsData.toolbarContainer.addEventListener("mousedown",t=>{t.stopPropagation(),t.stopImmediatePropagation()}),window.grapesjsTinyDocsData.editedEl=document.body.querySelector(t),window.grapesjsTinyDocsData.forceBr=n,n&&window.grapesjsTinyDocsData.editedEl.addEventListener("keydown",window.grapesjsTinyDocsData.editorClickHandler),tinymce.init({selector:t,inline:!0,menubar:!1,newline_behavior:"default",plugins:a.plugins,toolbar:a.toolbar,fixed_toolbar_container_target:o("div",window.grapesjsTinyDocsData.toolbarContainer,{}),init_instance_callback:function(t){window.grapesjsTinyDocsData.editorInstance=t}}).then(t=>{window.grapesjsTinyDocsData.tinymceInstant=t[0],t[0].focus()})}`
             }
           );
           this.executeInFrame(

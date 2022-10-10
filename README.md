@@ -9,13 +9,10 @@ This plugin replaces the default Rich Text Editor with the one from Tinymce
 * Plugin
     * Name: `grapesjs-plugin-tinymce6`
 
-
-
-## Download
-
-* `npm i grapesjs-plugin-tinymce6` or `yarn add grapesjs-plugin-tinymce6`
-
-
+# Author Contact
+Skype: maxim2356
+Telegram: @MaksymMalysh
+Email: support@devfuture.pro
 
 ## Usage
 
@@ -34,10 +31,20 @@ This plugin replaces the default Rich Text Editor with the one from Tinymce
       'grapesjs-plugin-tinymce6': {
         'tinymce-module': "https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js",
       },
-      inline: [ /* tag list for pure inline editing */ ],
-      inline_toolbar: [ /* tools bar buttons options for inline edited tags */ ],
-      toolbar: [ /* tools bar buttons options */ ],
-      plugins:  [ /* plugin options */ ]
+      inline: ['span','a','button','h1','h2','h3','h4','h5','label'],
+      inline_toolbar: [
+        'bold italic underline strikethrough forecolor backcolor',
+        'fontfamily fontsize'
+      ],
+      toolbar: [
+        'bold italic underline strikethrough fontfamily fontsize outdent indent',
+        'blocks forecolor backcolor | alignleft aligncenter alignright alignfull | numlist bullist'
+      ],
+      plugins:  [
+        'link',
+        'lists',
+        'autolink'
+      ]
     }
   });
 </script>
@@ -53,7 +60,7 @@ which is created when signing up to the [Tiny Cloud](https://www.tiny.cloud/auth
 Clone the repository
 
 ```sh
-$ git clone https://github.com/AndryBethpalko/grapesjs-plugin-tinymce6.git
+$ git clone https://github.com/GoodPHP/grapesjs-plugin-tinymce6.git
 $ cd grapesjs-plugin-tinymce6
 ```
 
