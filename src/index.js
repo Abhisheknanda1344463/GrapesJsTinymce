@@ -11,7 +11,12 @@ class TinyForGrapesJs {
       editor: editor,
       el: null,
       toolBarMObserver: new MutationObserver(this.onResize.bind(this)),
-      elementObserver: new MutationObserver(this.onResize.bind(this)),
+      elementObserver: new MutationObserver(
+        () => {
+          this.onResize();
+          this.editor.refresh();
+        }
+      ),
       editorOptions: options
     }
     // Clear default RTE toolbar
