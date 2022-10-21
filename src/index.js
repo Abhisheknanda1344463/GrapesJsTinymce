@@ -32,6 +32,14 @@ class TinyForGrapesJs {
         doc.close();
       }
     });
+    editor.on('frame:load',
+       ({el, model, view}) => {
+         this.frameBody.addEventListener(
+           'mousedown',
+           e => this.latestClickEvent = e
+         );
+       }
+    );
     // Append tinymce editor
     editor.setCustomRte(
       {
@@ -39,6 +47,10 @@ class TinyForGrapesJs {
         disable: this.disable.bind(this)
       }
     );
+  }
+
+  set latestClickEvent(value) {
+    if (this.grapesjsTinyDocsData) this.grapesjsTinyDocsData.latestClickEvent = value;
   }
 
   get editorOptions() {
@@ -128,7 +140,7 @@ class TinyForGrapesJs {
             'script',
             body,
             {
-              innerHTML: `function ${injectEditorInstant.name}(t,e,n=!1){let a=JSON.parse(decodeURI(e));function o(t,e,n){let a=document.createElement(t);return function t(e,n){if(n)for(let a in n)"object"==typeof n[a]?t(e[a],n[a]):e[a]=n[a]}(a,n),e&&e.appendChild(a),a}window.grapesjsTinyDocsData.toolbarContainer=o("div",document.body,{style:{position:"absolute",top:"0px",bottom:"0px",height:"min-content"}}),window.grapesjsTinyDocsData.toolbarContainer.addEventListener("mousedown",t=>{t.stopPropagation(),t.stopImmediatePropagation()}),window.grapesjsTinyDocsData.editedEl=document.body.querySelector(t),window.grapesjsTinyDocsData.forceBr=n,n&&window.grapesjsTinyDocsData.editedEl.addEventListener("keydown",window.grapesjsTinyDocsData.editorClickHandler),tinymce.init({selector:t,inline:!0,menubar:!1,newline_behavior:"default",plugins:a.plugins,toolbar:a.toolbar,fixed_toolbar_container_target:o("div",window.grapesjsTinyDocsData.toolbarContainer,{}),init_instance_callback:function(t){window.grapesjsTinyDocsData.editorInstance=t}}).then(t=>{window.grapesjsTinyDocsData.tinymceInstant=t[0],t[0].focus()})}`
+              innerHTML: `${injectEditorInstant.toString()}; function _typeof(obj) { return typeof obj; }`
             }
           );
           this.executeInFrame(
@@ -198,7 +210,11 @@ class TinyForGrapesJs {
         attributes: true
       }
     );
-    setTimeout(this.onResize.bind(this));
+    setTimeout(
+      () => {
+        this.onResize();
+      }
+    );
     return this;
   }
 
@@ -388,8 +404,36 @@ function injectEditorInstant(selector, jsonOptions, forceBr = false) {
     editors => {
       window.grapesjsTinyDocsData.tinymceInstant = editors[0];
       editors[0].focus();
+      setCaret();
     }
   );
+
+  function setCaret() {
+    let e = window.grapesjsTinyDocsData.latestClickEvent;
+    if (e) {
+      let range = null;
+      let textNode;
+      let offset;
+      if (document.caretRangeFromPoint) {
+        range = document.caretRangeFromPoint(e.clientX, e.clientY);
+        textNode = range.startContainer;
+        offset = range.startOffset;
+      } else if (document.caretPositionFromPoint) {
+        range = document.caretPositionFromPoint(e.clientX, e.clientY);
+        textNode = range.offsetNode;
+        offset = range.offset;
+      }
+      if (range) {
+        range = document.createRange();
+        let sel = document.getSelection();
+        range.setStart(textNode, offset)
+        range.collapse(true)
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      window.grapesjsTinyDocsData.latestClickEvent = null;
+    }
+  }
 
   /**
    *
@@ -413,7 +457,7 @@ function injectEditorInstant(selector, jsonOptions, forceBr = false) {
   function setElementProperty(elem, properties) {
     if (properties) {
       for (let key in properties) {
-        if (typeof properties[key] === 'object') {
+        if (_typeof(properties[key]) === 'object') {
           setElementProperty(elem[key], properties[key]);
         } else {
           elem[key] = properties[key];
