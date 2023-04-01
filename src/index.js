@@ -10,6 +10,7 @@ class TinyForGrapesJs {
     this._TinyForGrapesJsData = {
       editor: editor,
       el: null,
+      frame: null,
       toolBarMObserver: new MutationObserver(this.onResize.bind(this)),
       elementObserver: new MutationObserver(
         () => {
@@ -33,12 +34,13 @@ class TinyForGrapesJs {
       }
     });
     editor.on('frame:load',
-       ({el, model, view}) => {
-         this.frameBody.addEventListener(
-           'mousedown',
-           e => this.latestClickEvent = e
-         );
-       }
+      ({el, model, view}) => {
+        this.frame = el;
+        this.frameBody.addEventListener(
+          'mousedown',
+          e => this.latestClickEvent = e
+        );
+      }
     );
     // Append tinymce editor
     editor.setCustomRte(
@@ -47,6 +49,14 @@ class TinyForGrapesJs {
         disable: this.disable.bind(this)
       }
     );
+  }
+
+  get frame() {
+    return this._TinyForGrapesJsData.frame;
+  }
+
+  set frame(value) {
+    this._TinyForGrapesJsData.frame = value;
   }
 
   set latestClickEvent(value) {
@@ -82,7 +92,7 @@ class TinyForGrapesJs {
   }
 
   get frameDocument() {
-    let frame = document.querySelector('iframe');
+    let frame = this.frame;
     return frame && frame.contentDocument;
   }
 
@@ -92,7 +102,8 @@ class TinyForGrapesJs {
   }
 
   get frameContext() {
-    return window.parent[0];
+    let frame = this.frame;
+    return frame && frame.contentWindow;
   }
 
   get grapesjsTinyDocsData() {
@@ -165,64 +176,75 @@ class TinyForGrapesJs {
   }
 
   enable(el, rte) {
-    this.el = el;
-    let container = el;
-    let editorOptions = this.editorOptions;
-    let forceBr = 'false';
-    if (!Array.isArray(editorOptions.inline) || !editorOptions.inline.includes(el.tagName.toLowerCase())) {
-      const elContent = el.innerHTML;
-      el.innerHTML = '';
-      container = createHtmlElem(
-        'div',
-        el,
-        {
-          innerHTML: elContent,
-          style: {
-            outline: 'none'
+    // Enable rte in next run otherwise editable element can be pushed out the DOM in the fireFox
+    setTimeout(
+      () => doEnable(el, rte)
+    );
+
+    const doEnable = (el, rte) => {
+      this.el = el;
+      let container = el;
+      let editorOptions = this.editorOptions;
+      let forceBr = 'false';
+      if (!Array.isArray(editorOptions.inline) || !editorOptions.inline.includes(el.tagName.toLowerCase())) {
+        const elContent = el.innerHTML;
+        el.innerHTML = '';
+        container = createHtmlElem(
+          'div',
+          el,
+          {
+            innerHTML: elContent,
+            style: {
+              outline: 'none'
+            }
           }
+        );
+        editorOptions = {
+          toolbar: editorOptions.toolbar,
+          plugins: editorOptions.plugins
+        }
+      } else {
+        editorOptions = {
+          toolbar: editorOptions.inline_toolbar || editorOptions.toolbar,
+          plugins: editorOptions.plugins
+        }
+        forceBr = 'true';
+      }
+      this.executeInFrame(`${injectEditorInstant.name}('#${this.getElementId(container)}',"${encodeURI(JSON.stringify(editorOptions))}",${forceBr});`);
+      setTimeout(
+        () => {
+          this.toolBarMObserver.observe(
+            this.toolbarContainer.firstChild,
+            {
+              subtree: true,
+              childList: true,
+              attributes: true
+            }
+          );
+          this.elementObserver.observe(
+            this.el,
+            {
+              subtree: true,
+              childList: true,
+              attributes: true
+            }
+          );
+          this.onResize();
         }
       );
-      editorOptions = {
-        toolbar: editorOptions.toolbar,
-        plugins: editorOptions.plugins
-      }
-    } else {
-      editorOptions = {
-        toolbar: editorOptions.inline_toolbar || editorOptions.toolbar,
-        plugins: editorOptions.plugins
-      }
-      forceBr = 'true';
+      return this;
     }
-    this.executeInFrame(`${injectEditorInstant.name}('#${this.getElementId(container)}',"${encodeURI(JSON.stringify(editorOptions))}",${forceBr});`);
-    this.toolBarMObserver.observe(
-      this.toolbarContainer.firstChild,
-      {
-        subtree: true,
-        childList: true,
-        attributes: true
-      }
-    );
-    this.elementObserver.observe(
-      this.el,
-      {
-        subtree: true,
-        childList: true,
-        attributes: true
-      }
-    );
-    setTimeout(
-      () => {
-        this.onResize();
-      }
-    );
-    return this;
   }
+
 
   getContent() {
     return this.tinymceInstant ? this.tinymceInstant.bodyElement.innerHTML : '';
   }
 
   disable(el, rte) {
+    if (this.el) {
+      this.el.innerHTML = this.getContent();
+    }
     this.el = null;
     this.toolBarMObserver.disconnect();
     this.elementObserver.disconnect();
@@ -403,8 +425,12 @@ function injectEditorInstant(selector, jsonOptions, forceBr = false) {
     }).then(
     editors => {
       window.grapesjsTinyDocsData.tinymceInstant = editors[0];
-      editors[0].focus();
-      setCaret();
+      setTimeout(
+        () => {
+          editors[0].focus();
+          setCaret();
+        }
+      );
     }
   );
 
@@ -466,4 +492,3 @@ function injectEditorInstant(selector, jsonOptions, forceBr = false) {
     }
   }
 }
-

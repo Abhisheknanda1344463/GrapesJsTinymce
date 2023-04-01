@@ -1,6 +1,6 @@
 {
   "name": "grapesjs-plugin-tinymce6",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Replace the built-in RTE with Tinymce",
   "main": "dist/grapesjs-plugin-tinymce6",
   "scripts": {
